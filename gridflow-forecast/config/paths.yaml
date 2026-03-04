@@ -1,0 +1,5 @@
+data_dir: "data"
+outputs_dir: "outputs"
+bronze: "${data_dir}/bronze"
+silver: "${data_dir}/silver"
+gold: "${data_dir}/gold"

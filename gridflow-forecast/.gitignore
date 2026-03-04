@@ -1,0 +1,20 @@
+# Virtual envs
+.venv/
+venv/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Data and outputs (local-only)
+/data/
+data/
+outputs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
