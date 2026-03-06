@@ -18,7 +18,6 @@ class ElexonDataset:
     stream_path: str | None = None
 
 
-# Core source definitions
 ELEXON: Final[ApiSource] = ApiSource(
     name="elexon",
     base_url="https://data.elexon.co.uk/bmrs/api/v1",
@@ -26,17 +25,16 @@ ELEXON: Final[ApiSource] = ApiSource(
 )
 
 
-# Dataset definitions
 ELEXON_DATASETS: Final[dict[str, ElexonDataset]] = {
     "fuelhh": ElexonDataset(
         name="fuelhh",
         path="/datasets/FUELHH",
         stream_path="/datasets/FUELHH/stream",
     ),
-    "indo": ElexonDataset(
-        name="indo",
-        path="/demand/outturn",
-        stream_path="/demand/outturn/stream",
+    "demand_actual_total": ElexonDataset(
+        name="demand_actual_total",
+        path="/demand/actual/total",
+        stream_path=None,
     ),
     "itsdo": ElexonDataset(
         name="itsdo",

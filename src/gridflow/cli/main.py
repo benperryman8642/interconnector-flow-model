@@ -4,9 +4,9 @@ import argparse
 
 from gridflow.etl.bronze.uk_elexon import (
     fetch_fuelhh_day,
+    ingest_demand_actual_total_history,
     ingest_elexon_core_history,
     ingest_fuelhh_history,
-    ingest_indo_history,
     ingest_itsdo_history,
     ingest_mid_history,
 )
@@ -30,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_one.add_argument(
         "--dataset",
         required=True,
-        choices=["fuelhh", "indo", "itsdo", "mid"],
+        choices=["fuelhh", "demand_actual_total", "itsdo", "mid"]
     )
     ingest_one.add_argument("--date-from", required=True)
     ingest_one.add_argument("--date-to", required=True)
@@ -69,11 +69,12 @@ def main() -> None:
                 fuel_type=args.fuel_type,
                 overwrite=args.overwrite,
             )
-        elif args.dataset == "indo":
-            manifest = ingest_indo_history(
+        elif args.dataset == "demand_actual_total":
+            manifest = ingest_demand_actual_total_history(
                 date_from=args.date_from,
                 date_to=args.date_to,
                 overwrite=args.overwrite,
+                chunk_days=7,
             )
         elif args.dataset == "itsdo":
             manifest = ingest_itsdo_history(
