@@ -33,19 +33,14 @@ ELEXON_DATASETS: Final[dict[str, ElexonDataset]] = {
         path="/datasets/FUELHH",
         stream_path="/datasets/FUELHH/stream",
     ),
-    "fuelinst": ElexonDataset(
-        name="fuelinst",
-        path="/datasets/FUELINST",
-        stream_path="/datasets/FUELINST/stream",
-    ),
     "indo": ElexonDataset(
         name="indo",
-        path="/datasets/INDO",
-        stream_path=None,
+        path="/demand/outturn",
+        stream_path="/demand/outturn/stream",
     ),
     "itsdo": ElexonDataset(
         name="itsdo",
-        path="/datasets/ITSDO",
+        path="/demand/peak",
         stream_path=None,
     ),
     "mid": ElexonDataset(
