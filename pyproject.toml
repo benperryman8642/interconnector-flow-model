@@ -1,12 +1,33 @@
 [build-system]
-requires = ["setuptools>=42","wheel"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "interconnector-flow-model"
-version = "0.0.0"
-description = "Forecasting scaffold for interconnector flows"
+name = "interconnector-flow"
+version = "0.1.0"
+description = "Forecasting and analysing UK-European electricity interconnector flows"
 readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Ben Perryman" }
+]
+dependencies = [
+    "pandas",
+    "pyarrow",
+    "requests",
+    "python-dotenv",
+    "scikit-learn"
+]
 
-[tool.pytest]
-minversion = "6.0"
+[project.optional-dependencies]
+dev = [
+    "jupyter",
+    "notebook",
+    "matplotlib"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

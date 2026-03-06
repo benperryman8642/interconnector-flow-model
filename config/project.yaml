@@ -1,4 +1,37 @@
 project:
   name: gridflow-forecast
-  author: ""
-  version: 0.0.0
+  author: "Ben Perryman"
+  version: 0.1.0
+
+canonical_timezone: UTC
+canonical_frequency: 30min
+interval_label: start
+
+countries:
+  - GB
+  - FR
+  - IE
+  - DK
+  - NO
+  - BE
+  - NL
+
+uk_interconnectors:
+  - IFA
+  - IFA2
+  - BritNed
+  - Nemo
+  - NorthSeaLink
+  - Viking
+  - Moyle
+  - EWIC
+  - Greenlink
+
+data_layers:
+  bronze: data/bronze
+  silver: data/silver
+  gold: data/gold
+
+supported_frequencies:
+  - 30min
+  - 1h
