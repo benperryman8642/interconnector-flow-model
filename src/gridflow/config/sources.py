@@ -36,11 +36,6 @@ ELEXON_DATASETS: Final[dict[str, ElexonDataset]] = {
         path="/demand/actual/total",
         stream_path=None,
     ),
-    "itsdo": ElexonDataset(
-        name="itsdo",
-        path="/demand/peak",
-        stream_path=None,
-    ),
     "mid": ElexonDataset(
         name="mid",
         path="/datasets/MID",

@@ -167,20 +167,6 @@ def fetch_demand_actual_total_chunk(
     return payload, df
 
 
-def fetch_itsdo_day(day: date) -> tuple[Payload, pd.DataFrame]:
-    dataset = ELEXON_DATASETS["itsdo"]
-    url = build_url(ELEXON, dataset.path)
-
-    publish_from, publish_to = _utc_day_bounds(day)
-    params = {
-        "publishDateTimeFrom": publish_from,
-        "publishDateTimeTo": publish_to,
-    }
-
-    payload = _request_json(url, params)
-    return payload, payload_to_frame(payload)
-
-
 def fetch_mid_day(day: date) -> tuple[Payload, pd.DataFrame]:
     dataset = ELEXON_DATASETS["mid"]
     if not dataset.stream_path:
@@ -392,21 +378,6 @@ def ingest_demand_actual_total_history(
     )
 
 
-def ingest_itsdo_history(
-    date_from: str | date | datetime,
-    date_to: str | date | datetime,
-    *,
-    overwrite: bool = False,
-) -> pd.DataFrame:
-    return ingest_elexon_daily_history(
-        dataset_name="itsdo",
-        date_from=date_from,
-        date_to=date_to,
-        fetch_day_fn=fetch_itsdo_day,
-        overwrite=overwrite,
-    )
-
-
 def ingest_mid_history(
     date_from: str | date | datetime,
     date_to: str | date | datetime,
@@ -445,13 +416,6 @@ def ingest_elexon_core_history(
         date_to=date_to,
         overwrite=overwrite,
         chunk_days=7,
-    )
-
-    print("\n=== Ingesting ITSDO ===")
-    results["itsdo"] = ingest_itsdo_history(
-        date_from=date_from,
-        date_to=date_to,
-        overwrite=overwrite,
     )
 
     print("\n=== Ingesting MID ===")
