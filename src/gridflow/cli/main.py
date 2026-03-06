@@ -2,60 +2,74 @@ from __future__ import annotations
 
 import argparse
 
-from gridflow.etl.bronze.uk_elexon import run_fuelhh_ingest
+from gridflow.etl.bronze.uk_elexon import ingest_fuelhh_history, run_fuelhh_ingest
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Gridflow CLI smoke test for Elexon ingestion."
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Gridflow CLI")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    smoke = subparsers.add_parser(
+        "test-fuelhh",
+        help="Run a small Elexon FUELHH smoke test.",
     )
-    parser.add_argument(
-        "--date-from",
-        default="2026-03-01",
-        help="Settlement date from, e.g. 2026-03-01",
+    smoke.add_argument("--date-from", default="2026-02-28")
+    smoke.add_argument("--date-to", default="2026-03-01")
+    smoke.add_argument("--fuel-type", default=None)
+
+    history = subparsers.add_parser(
+        "ingest-fuelhh-history",
+        help="Ingest Elexon FUELHH history into bronze storage.",
     )
-    parser.add_argument(
-        "--date-to",
-        default="2026-03-02",
-        help="Settlement date to, e.g. 2026-03-02",
+    history.add_argument("--date-from", required=True, help="YYYY-MM-DD")
+    history.add_argument("--date-to", required=True, help="YYYY-MM-DD")
+    history.add_argument("--fuel-type", default=None, help="Optional fuel filter")
+    history.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing daily files",
     )
-    parser.add_argument(
-        "--fuel-type",
-        default=None,
-        help="Optional Elexon fuel type filter, e.g. WIND or CCGT",
-    )
-    parser.add_argument(
-        "--run-label",
-        default=None,
-        help="Optional output file label. Defaults to current UTC timestamp.",
-    )
-    return parser.parse_args()
+
+    return parser
 
 
 def main() -> None:
-    args = parse_args()
+    parser = build_parser()
+    args = parser.parse_args()
 
-    print("Running Elexon FUELHH bronze ingestion...")
-    print(f"  settlement_date_from = {args.date_from}")
-    print(f"  settlement_date_to   = {args.date_to}")
-    print(f"  fuel_type            = {args.fuel_type}")
+    if args.command == "test-fuelhh":
+        print("Running Elexon FUELHH bronze ingestion smoke test...")
+        df = run_fuelhh_ingest(
+            settlement_date_from=args.date_from,
+            settlement_date_to=args.date_to,
+            fuel_type=args.fuel_type,
+        )
+        print(f"Rows fetched: {len(df)}")
+        print(f"Columns: {list(df.columns)}")
+        if not df.empty:
+            print(df.head().to_string(index=False))
+        return
 
-    df = run_fuelhh_ingest(
-        settlement_date_from=args.date_from,
-        settlement_date_to=args.date_to,
-        fuel_type=args.fuel_type,
-        run_label=args.run_label,
-    )
+    if args.command == "ingest-fuelhh-history":
+        print("Running historical FUELHH ingestion...")
+        print(f"  date_from = {args.date_from}")
+        print(f"  date_to   = {args.date_to}")
+        print(f"  fuel_type = {args.fuel_type}")
+        print(f"  overwrite = {args.overwrite}")
 
-    print("\nIngestion complete.")
-    print(f"Rows fetched: {len(df)}")
-    print(f"Columns: {list(df.columns)}")
+        manifest = ingest_fuelhh_history(
+            date_from=args.date_from,
+            date_to=args.date_to,
+            fuel_type=args.fuel_type,
+            overwrite=args.overwrite,
+        )
 
-    if not df.empty:
-        print("\nHead:")
-        print(df.head().to_string(index=False))
-    else:
-        print("\nNo rows returned.")
+        print("\nRun complete.")
+        print(f"Manifest rows written/appended: {len(manifest)}")
+        print(manifest.tail(10).to_string(index=False))
+        return
+
+    parser.error(f"Unknown command: {args.command}")
 
 
 if __name__ == "__main__":
