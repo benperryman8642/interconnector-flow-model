@@ -65,7 +65,27 @@ ELEXON_DATASETS: Final[dict[str, ElexonDataset]] = {
 ENTSOE_ZONES: Final[dict[str, str]] = {
     "FR": "10YFR-RTE------C",
     "IE_SEM": "10Y1001A1001A59C",
+    "BE": "10YBE----------2",
+    "NL": "10YNL----------L",
+
+    "DE_LU": "10Y1001A1001A82H",
+
+    "NO1": "10YNO-1--------2",
+    "NO2": "10YNO-2--------T",
+    "NO3": "10YNO-3--------J",
+    "NO4": "10YNO-4--------9",
+    "NO5": "10Y1001A1001A48H",
+
+    "DK1": "10YDK-1--------W",
+    "DK2": "10YDK-2--------M",
+
+    "SE1": "10Y1001A1001A44P",
+    "SE2": "10Y1001A1001A45N",
+    "SE3": "10Y1001A1001A46L",
+    "SE4": "10Y1001A1001A47J",
 }
+
+
 
 
 ENTSOE_DATASETS: Final[dict[str, EntsoeDataset]] = {
