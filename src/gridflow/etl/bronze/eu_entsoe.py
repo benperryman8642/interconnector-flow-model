@@ -14,7 +14,7 @@ from gridflow.common.io import write_json, write_parquet
 from gridflow.common.manifests import append_manifest_rows
 from gridflow.common.paths import BRONZE_ROOT, bronze_path
 from gridflow.common.time import inclusive_date_range
-from gridflow.config.sources import ENTSOE, ENTSOE_DATASETS, ENTSOE_ZONES
+from gridflow.config.sources import ENTSOE, ENTSOE_AREAS, ENTSOE_DATASETS
 from gridflow.etl.bronze.common import (
     build_ingest_status_row,
     daily_bronze_file_paths,
@@ -31,6 +31,11 @@ def _get_entsoe_token() -> str:
             "ENTSOE_SECURITY_TOKEN is not set. Add it to your environment or .env before calling ENTSO-E."
         )
     return token
+
+def _area_code(area: str) -> str:
+    if area not in ENTSOE_AREAS:
+        raise ValueError(f"Unknown ENTSOE area: {area}")
+    return ENTSOE_AREAS[area].eic
 
 def _xml_namespace(root: ET.Element) -> dict[str, str]:
     if root.tag.startswith("{"):
@@ -127,18 +132,15 @@ def _parse_entsoe_points(xml_text: str) -> pd.DataFrame:
 
 
 def fetch_actual_total_load(
-    zone: str,
+    area: str,
     date_from: str | date | datetime,
     date_to: str | date | datetime,
 ) -> tuple[str, pd.DataFrame]:
-    if zone not in ENTSOE_ZONES:
-        raise ValueError(f"Unknown ENTSOE zone: {zone}")
-
     dataset = ENTSOE_DATASETS["actual_total_load"]
     params = {
         "documentType": dataset.document_type,
         "processType": dataset.process_type,
-        "outBiddingZone_Domain": ENTSOE_ZONES[zone],
+        "outBiddingZone_Domain": _area_code(area),
         "periodStart": _period_str(date_from),
         "periodEnd": _period_str(date_to),
     }
@@ -149,18 +151,15 @@ def fetch_actual_total_load(
 
 
 def fetch_generation_per_type(
-    zone: str,
+    area: str,
     date_from: str | date | datetime,
     date_to: str | date | datetime,
 ) -> tuple[str, pd.DataFrame]:
-    if zone not in ENTSOE_ZONES:
-        raise ValueError(f"Unknown ENTSOE zone: {zone}")
-
     dataset = ENTSOE_DATASETS["generation_per_type"]
     params = {
         "documentType": dataset.document_type,
         "processType": dataset.process_type,
-        "in_Domain": ENTSOE_ZONES[zone],
+        "in_Domain": _area_code(area),
         "periodStart": _period_str(date_from),
         "periodEnd": _period_str(date_to),
     }
@@ -171,18 +170,15 @@ def fetch_generation_per_type(
 
 
 def fetch_energy_prices(
-    zone: str,
+    area: str,
     date_from: str | date | datetime,
     date_to: str | date | datetime,
 ) -> tuple[str, pd.DataFrame]:
-    if zone not in ENTSOE_ZONES:
-        raise ValueError(f"Unknown ENTSOE zone: {zone}")
-
     dataset = ENTSOE_DATASETS["energy_prices"]
     params = {
         "documentType": dataset.document_type,
-        "in_Domain": ENTSOE_ZONES[zone],
-        "out_Domain": ENTSOE_ZONES[zone],
+        "in_Domain": _area_code(area),
+        "out_Domain": _area_code(area),
         "periodStart": _period_str(date_from),
         "periodEnd": _period_str(date_to),
     }
@@ -210,6 +206,32 @@ def save_bronze_entsoe_day(
         "raw_xml": str(paths["raw"]),
         "flat_parquet": str(paths["flat"]),
     }
+
+def ingest_entsoe_ireland_area_comparison(
+    date_from: str | date | datetime,
+    date_to: str | date | datetime,
+    *,
+    overwrite: bool = False,
+) -> dict[str, dict[str, pd.DataFrame]]:
+    """
+    Compare ENTSOE coverage across the Ireland-related areas:
+    - IE_SEM
+    - IE_ROI
+    - IE_NI
+    """
+    ireland_areas = ["IE_SEM", "IE_ROI", "IE_NI"]
+    results: dict[str, dict[str, pd.DataFrame]] = {}
+
+    for area in ireland_areas:
+        print(f"\n######## ENTSOE AREA: {area} ########")
+        results[area] = ingest_entsoe_core_history(
+            zone=area,
+            date_from=date_from,
+            date_to=date_to,
+            overwrite=overwrite,
+        )
+
+    return results
 
 
 def ingest_entsoe_daily_history(
@@ -385,10 +407,10 @@ def ingest_entsoe_core_history_all_zones(
 ) -> dict[str, dict[str, pd.DataFrame]]:
     results: dict[str, dict[str, pd.DataFrame]] = {}
 
-    for zone in ENTSOE_ZONES:
-        print(f"\n######## ENTSOE ZONE: {zone} ########")
-        results[zone] = ingest_entsoe_core_history(
-            zone=zone,
+    for area in ENTSOE_AREAS:
+        print(f"\n######## ENTSOE AREA: {area} ########")
+        results[area] = ingest_entsoe_core_history(
+            zone=area,
             date_from=date_from,
             date_to=date_to,
             overwrite=overwrite,

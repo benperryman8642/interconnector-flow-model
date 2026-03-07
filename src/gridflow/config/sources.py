@@ -25,6 +25,13 @@ class EntsoeDataset:
     process_type: str | None = None
 
 
+@dataclass(frozen=True)
+class EntsoeArea:
+    name: str
+    eic: str
+    area_kind: str  # e.g. bidding_zone, scheduling_area
+
+
 ELEXON: Final[ApiSource] = ApiSource(
     name="elexon",
     base_url="https://data.elexon.co.uk/bmrs/api/v1",
@@ -62,10 +69,32 @@ ELEXON_DATASETS: Final[dict[str, ElexonDataset]] = {
 }
 
 
-ENTSOE_ZONES: Final[dict[str, str]] = {
-    "FR": "10YFR-RTE------C",
-    "IE_SEM": "10Y1001A1001A59C",
+ENTSOE_AREAS: Final[dict[str, EntsoeArea]] = {
+    "FR": EntsoeArea(
+        name="FR",
+        eic="10YFR-RTE------C",
+        area_kind="bidding_zone",
+    ),
+    "IE_SEM": EntsoeArea(
+        name="IE_SEM",
+        eic="10Y1001A1001A59C",
+        area_kind="bidding_zone",
+    ),
+    "IE_ROI": EntsoeArea(
+        name="IE_ROI",
+        eic="10YIE-1001A00010",
+        area_kind="scheduling_area",
+    ),
+    "IE_NI": EntsoeArea(
+        name="IE_NI",
+        eic="10Y1001A1001A016",
+        area_kind="scheduling_area",
+    ),
 }
+
+
+# Keep this alias for compatibility with existing code if needed
+ENTSOE_ZONES: Final[dict[str, str]] = {key: area.eic for key, area in ENTSOE_AREAS.items()}
 
 
 ENTSOE_DATASETS: Final[dict[str, EntsoeDataset]] = {

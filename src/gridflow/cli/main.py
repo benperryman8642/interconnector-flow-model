@@ -5,12 +5,13 @@ from collections.abc import Callable
 
 import pandas as pd
 
-from gridflow.config.sources import ENTSOE_ZONES
+from gridflow.config.sources import ENTSOE_AREAS
 from gridflow.etl.bronze.eu_entsoe import (
     ingest_actual_total_load_history,
     ingest_energy_prices_history,
     ingest_entsoe_core_history,
     ingest_entsoe_core_history_all_zones,
+    ingest_entsoe_ireland_area_comparison,
     ingest_generation_per_type_history,
 )
 from gridflow.etl.bronze.uk_elexon import (
@@ -104,7 +105,7 @@ def _add_bronze_entsoe_parsers(subparsers: argparse._SubParsersAction) -> None:
         "bronze-entsoe-core-zone",
         help="Build bronze ENTSOE core datasets for one zone.",
     )
-    parser.add_argument("--zone", required=True, choices=sorted(ENTSOE_ZONES.keys()))
+    parser.add_argument("--zone", required=True, choices=sorted(ENTSOE_AREAS.keys()))
     parser.add_argument("--date-from", required=True)
     parser.add_argument("--date-to", required=True)
     parser.add_argument("--overwrite", action="store_true")
@@ -112,6 +113,14 @@ def _add_bronze_entsoe_parsers(subparsers: argparse._SubParsersAction) -> None:
     parser = subparsers.add_parser(
         "bronze-entsoe-core-all",
         help="Build bronze ENTSOE core datasets for all zones in sources.py.",
+    )
+    parser.add_argument("--date-from", required=True)
+    parser.add_argument("--date-to", required=True)
+    parser.add_argument("--overwrite", action="store_true")
+
+    parser = subparsers.add_parser(
+        "bronze-entsoe-ireland-test",
+        help="Compare ENTSOE core datasets across IE_SEM, IE_ROI and IE_NI.",
     )
     parser.add_argument("--date-from", required=True)
     parser.add_argument("--date-to", required=True)
@@ -126,7 +135,7 @@ def _add_bronze_entsoe_parsers(subparsers: argparse._SubParsersAction) -> None:
         required=True,
         choices=["actual_total_load", "generation_per_type", "energy_prices"],
     )
-    parser.add_argument("--zone", required=True, choices=sorted(ENTSOE_ZONES.keys()))
+    parser.add_argument("--zone", required=True, choices=sorted(ENTSOE_AREAS.keys()))
     parser.add_argument("--date-from", required=True)
     parser.add_argument("--date-to", required=True)
     parser.add_argument("--overwrite", action="store_true")
@@ -212,6 +221,19 @@ def handle_bronze_elexon_core(args: argparse.Namespace) -> None:
         overwrite=args.overwrite,
     )
     _print_manifest_dict_summary("Bronze Elexon core complete.", results, tail_n=5)
+
+
+def handle_bronze_entsoe_ireland_test(args: argparse.Namespace) -> None:
+    results = ingest_entsoe_ireland_area_comparison(
+        date_from=args.date_from,
+        date_to=args.date_to,
+        overwrite=args.overwrite,
+    )
+    _print_nested_manifest_dict_summary(
+        "Bronze ENTSOE Ireland area comparison complete.",
+        results,
+        tail_n=3,
+    )
 
 
 def handle_bronze_elexon_history(args: argparse.Namespace) -> None:
@@ -350,6 +372,7 @@ def handle_bronze_entsoe_history(args: argparse.Namespace) -> None:
 COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], None]] = {
     "test-fuelhh": handle_test_fuelhh,
     "bronze-elexon-core": handle_bronze_elexon_core,
+    "bronze-entsoe-ireland-test": handle_bronze_entsoe_ireland_test,
     "bronze-elexon-history": handle_bronze_elexon_history,
     "silver-elexon-core": handle_silver_elexon_core,
     "silver-elexon-history": handle_silver_elexon_history,
