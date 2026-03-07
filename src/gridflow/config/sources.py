@@ -18,10 +18,23 @@ class ElexonDataset:
     stream_path: str | None = None
 
 
+@dataclass(frozen=True)
+class EntsoeDataset:
+    name: str
+    document_type: str
+    process_type: str | None = None
+
+
 ELEXON: Final[ApiSource] = ApiSource(
     name="elexon",
     base_url="https://data.elexon.co.uk/bmrs/api/v1",
     timeout_seconds=30,
+)
+
+ENTSOE: Final[ApiSource] = ApiSource(
+    name="entsoe",
+    base_url="https://web-api.tp.entsoe.eu/api",
+    timeout_seconds=60,
 )
 
 
@@ -45,6 +58,31 @@ ELEXON_DATASETS: Final[dict[str, ElexonDataset]] = {
         name="metadata_latest",
         path="/datasets/metadata/latest",
         stream_path=None,
+    ),
+}
+
+
+ENTSOE_ZONES: Final[dict[str, str]] = {
+    "FR": "10YFR-RTE------C",
+    "IE_SEM": "10Y1001A1001A59C",
+}
+
+
+ENTSOE_DATASETS: Final[dict[str, EntsoeDataset]] = {
+    "actual_total_load": EntsoeDataset(
+        name="actual_total_load",
+        document_type="A65",
+        process_type="A16",
+    ),
+    "generation_per_type": EntsoeDataset(
+        name="generation_per_type",
+        document_type="A75",
+        process_type="A16",
+    ),
+    "energy_prices": EntsoeDataset(
+        name="energy_prices",
+        document_type="A44",
+        process_type=None,
     ),
 }
 
