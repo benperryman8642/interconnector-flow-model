@@ -83,9 +83,9 @@ ENTSOE_ZONES: Final[dict[str, str]] = {
     "SE2": "10Y1001A1001A45N",
     "SE3": "10Y1001A1001A46L",
     "SE4": "10Y1001A1001A47J",
+    
+    # "UK": "10Y1001A1001A92E", Better to use elexon api for UK, as entsoe data is less complete
 }
-
-
 
 
 ENTSOE_DATASETS: Final[dict[str, EntsoeDataset]] = {

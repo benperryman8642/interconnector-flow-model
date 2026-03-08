@@ -26,6 +26,12 @@ from gridflow.etl.silver.elexon import (
     run_fuelhh_silver_history,
     run_mid_silver_history,
 )
+from gridflow.etl.silver.entsoe import (
+    run_actual_total_load_silver_history,
+    run_energy_prices_silver_history,
+    run_entsoe_core_silver_history,
+    run_generation_per_type_silver_history,
+)
 
 
 # ---------------------------------------------------------------------
@@ -131,6 +137,38 @@ def _add_bronze_entsoe_parsers(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument("--date-to", required=True)
     parser.add_argument("--overwrite", action="store_true")
 
+def _add_silver_entsoe_parsers(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser(
+        "silver-entsoe-core-zone",
+        help="Build silver ENTSOE core datasets for one zone from bronze files.",
+    )
+    parser.add_argument("--zone", required=True, choices=sorted(ENTSOE_ZONES.keys()))
+    parser.add_argument("--date-from", required=True)
+    parser.add_argument("--date-to", required=True)
+    parser.add_argument("--overwrite", action="store_true")
+
+    parser = subparsers.add_parser(
+        "silver-entsoe-history",
+        help="Build one ENTSOE silver dataset for one zone from bronze files.",
+    )
+    parser.add_argument(
+        "--dataset",
+        required=True,
+        choices=["actual_total_load", "generation_per_type", "energy_prices"],
+    )
+    parser.add_argument("--zone", required=True, choices=sorted(ENTSOE_ZONES.keys()))
+    parser.add_argument("--date-from", required=True)
+    parser.add_argument("--date-to", required=True)
+    parser.add_argument("--overwrite", action="store_true")
+
+    parser = subparsers.add_parser(
+        "silver-entsoe-core-all",
+        help="Build silver ENTSOE core datasets for all zones from bronze files.",
+    )
+    parser.add_argument("--date-from", required=True)
+    parser.add_argument("--date-to", required=True)
+    parser.add_argument("--overwrite", action="store_true")
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Gridflow CLI")
@@ -140,6 +178,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_bronze_elexon_parsers(subparsers)
     _add_silver_elexon_parsers(subparsers)
     _add_bronze_entsoe_parsers(subparsers)
+    _add_silver_entsoe_parsers(subparsers)
 
     return parser
 
@@ -341,6 +380,67 @@ def handle_bronze_entsoe_history(args: argparse.Namespace) -> None:
 
     _print_manifest_summary("Bronze ENTSOE run complete.", manifest, tail_n=10)
 
+def handle_silver_entsoe_core_zone(args: argparse.Namespace) -> None:
+    results = run_entsoe_core_silver_history(
+        zone=args.zone,
+        date_from=args.date_from,
+        date_to=args.date_to,
+        overwrite=args.overwrite,
+    )
+    _print_path_dict_summary(
+        f"Silver ENTSOE core complete for zone {args.zone}.",
+        results,
+        tail_n=5,
+    )
+
+
+def handle_silver_entsoe_history(args: argparse.Namespace) -> None:
+    if args.dataset == "actual_total_load":
+        paths = run_actual_total_load_silver_history(
+            zone=args.zone,
+            date_from=args.date_from,
+            date_to=args.date_to,
+            overwrite=args.overwrite,
+        )
+    elif args.dataset == "generation_per_type":
+        paths = run_generation_per_type_silver_history(
+            zone=args.zone,
+            date_from=args.date_from,
+            date_to=args.date_to,
+            overwrite=args.overwrite,
+        )
+    elif args.dataset == "energy_prices":
+        paths = run_energy_prices_silver_history(
+            zone=args.zone,
+            date_from=args.date_from,
+            date_to=args.date_to,
+            overwrite=args.overwrite,
+        )
+    else:
+        raise ValueError(f"Unsupported ENTSOE silver dataset: {args.dataset}")
+
+    _print_paths_summary("Silver ENTSOE run complete.", paths, tail_n=10)
+
+def handle_silver_entsoe_core_all(args: argparse.Namespace) -> None:
+    results: dict[str, dict[str, list]] = {}
+
+    for zone in ENTSOE_ZONES:
+        print(f"\n######## ENTSOE ZONE: {zone} ########")
+        results[zone] = run_entsoe_core_silver_history(
+            zone=zone,
+            date_from=args.date_from,
+            date_to=args.date_to,
+            overwrite=args.overwrite,
+        )
+
+    print("\nSilver ENTSOE core complete for all zones.")
+    for zone, zone_results in results.items():
+        print(f"\n######## ZONE: {zone} ########")
+        for dataset_key, paths in zone_results.items():
+            print(f"\n--- {dataset_key.upper()} ---")
+            for path in paths[-3:]:
+                print(path)
+
 
 # ---------------------------------------------------------------------
 # Main dispatch
@@ -357,6 +457,9 @@ COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], None]] = {
     "bronze-entsoe-core-zone": handle_bronze_entsoe_core_zone,
     "bronze-entsoe-core-all": handle_bronze_entsoe_core_all,
     "bronze-entsoe-history": handle_bronze_entsoe_history,
+    "silver-entsoe-core-zone": handle_silver_entsoe_core_zone,
+    "silver-entsoe-history": handle_silver_entsoe_history,
+    "silver-entsoe-core-all": handle_silver_entsoe_core_all,
 }
 
 
