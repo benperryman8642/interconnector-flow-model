@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import requests
 
 from dotenv import load_dotenv
 from gridflow.common.io import write_json, write_parquet
@@ -20,6 +19,7 @@ from gridflow.etl.bronze.common import (
     daily_bronze_file_paths,
     should_skip_existing,
 )
+from gridflow.common.http import ENTSOE_HTTP_CONFIG, get_with_retries
 
 ENTSOE_NAMESPACE = {"ns": "urn:iec62325.351:tc57wg16:451-6:publicationdocument:7:0"}
 load_dotenv()
@@ -74,13 +74,14 @@ def _dataset_manifest_path(dataset_name: str, zone: str) -> Path:
 
 def _request_xml(params: dict[str, Any]) -> str:
     query_params = {"securityToken": _get_entsoe_token(), **params}
-    response = requests.get(
-        ENTSOE.base_url,
+    response = get_with_retries(
+        source_name=ENTSOE.name,
+        url=ENTSOE.base_url,
+        config=ENTSOE_HTTP_CONFIG,
         params=query_params,
         headers=_default_headers(),
         timeout=ENTSOE.timeout_seconds,
     )
-    response.raise_for_status()
     return response.text
 
 

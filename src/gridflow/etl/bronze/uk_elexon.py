@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Callable
 
 import pandas as pd
-import requests
 
 from gridflow.common.io import write_json, write_parquet
 from gridflow.common.manifests import append_manifest_rows
@@ -17,6 +16,7 @@ from gridflow.etl.bronze.common import (
     daily_bronze_file_paths,
     should_skip_existing,
 )
+from gridflow.common.http import ELEXON_HTTP_CONFIG, get_with_retries
 
 Payload = dict[str, Any] | list[Any]
 FetchDayFn = Callable[[date], tuple[Payload, pd.DataFrame]]
@@ -79,13 +79,14 @@ def _json_safe_records(df: pd.DataFrame) -> list[dict[str, Any]]:
     return safe_df.to_dict(orient="records")
 
 def _request_json(url: str, params: dict[str, Any]) -> Payload:
-    response = requests.get(
-        url,
+    response = get_with_retries(
+        source_name=ELEXON.name,
+        url=url,
+        config=ELEXON_HTTP_CONFIG,
         params=params,
         headers=_default_headers(),
         timeout=ELEXON.timeout_seconds,
     )
-    response.raise_for_status()
     return response.json()
 
 
